@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Navaratri Celebration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+      :root{
+        --bg:#FFF7ED;
+        --accent:#EF4444;
+        --muted:#6B7280;
+        --glass: rgba(255,255,255,0.7);
+      }
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#222;background:linear-gradient(180deg,#FFF7ED 0%, #FFF1F2 100%);}
+      header.nav{position:fixed;top:0;left:0;right:0;background:linear-gradient(90deg,#F97316,#EF4444,#EC4899);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;z-index:40;box-shadow:0 4px 18px rgba(0,0,0,0.12)}
+      .brand{font-weight:700;font-size:20px;display:flex;gap:10px;align-items:center}
+      .nav-links{display:flex;gap:14px;align-items:center}
+      .nav-links button{background:transparent;border:0;color:inherit;font-weight:600;cursor:pointer}
+      main{padding-top:78px}
+      .container{max-width:1100px;margin:0 auto;padding:28px}
+      .hero{min-height:72vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+      .hero .panel{background:var(--glass);backdrop-filter:blur(6px);padding:28px;border-radius:16px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.12)}
+      h1{font-family:Lora,serif;margin:12px 0}
+      .count-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+      .count-item{background:linear-gradient(180deg,#F97316,#EF4444);color:white;padding:12px;border-radius:10px}
+      .floating-diya{position:absolute;animation:float 6s ease-in-out infinite;opacity:.9}
+      @keyframes float{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-18px) rotate(6deg)}100%{transform:translateY(0) rotate(0)}}
+      /* gallery */
+      .grid{display:grid;gap:12px}
+      .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+      .card{background:white;border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+      .masonry{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));grid-auto-rows:140px;gap:12px}
+      .masonry .tile{background:linear-gradient(180deg,#FDBA74,#FB7185);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:36px;color:white;cursor:pointer;position:relative;overflow:hidden}
+      .tile .label{position:absolute;left:0;right:0;bottom:0;padding:8px;background:linear-gradient(0deg,rgba(0,0,0,.6),transparent);color:white;text-align:center}
+      /* modal */
+      .modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:60}
+      .modal .content{background:white;padding:18px;border-radius:12px;max-width:920px;width:92%}
+      /* schedule */
+      .days{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+      .day-card{background:white;border-radius:10px;padding:12px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.06);transition:transform .18s,box-shadow .18s}
+      .day-card:hover{transform:translateY(-6px);box-shadow:0 16px 36px rgba(0,0,0,0.12)}
+      .detail{margin-top:16px;background:white;padding:16px;border-left:8px solid #FCD34D;border-radius:8px}
+      footer{background:linear-gradient(90deg,#F97316,#EF4444);color:white;padding:28px}
+      @media(max-width:800px){.count-grid{grid-template-columns:repeat(2,1fr)}.nav-links{display:none}}
+      /* small helpers */
+      .pill{display:inline-block;padding:6px 10px;border-radius:20px;background:rgba(255,255,255,0.12);font-weight:600}
+      .btn{background:#F59E0B;border:0;padding:10px 14px;border-radius:8px;color:#111;font-weight:700;cursor:pointer}
+      .temple-svg{width:220px;height:160px}
+    </style>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="brand"><span style="font-size:22px">🪔</span><div>Navaratri 2025</div></div>
+      <nav class="nav-links">
+        <button data-scroll="home">Home</button>
+        <button data-scroll="about">About</button>
+        <button data-scroll="garba">Garba</button>
+        <button data-scroll="gallery">Gallery</button>
+        <button data-scroll="schedule">Schedule</button>
+        <button data-scroll="contact">Contact</button>
+        <button id="music-toggle" title="Play / Pause Music" class="pill">🔊</button>
+      </nav>
+    </header>
+
+    <main>
+      <div id="root"></div>
+    </main>
+
+    <audio id="bg-audio" loop crossorigin="anonymous">
+      <source src="https://cdn.jsdelivr.net/gh/fawazahmed0/sounds@main/om.mp3" type="audio/mpeg">
+      <!-- optional: you can replace the above URL with your own devotional track -->
+    </audio>
+
+    <!-- React + Babel via CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef } = React;
+
+      const NAVARATRI_DAYS = [
+        { day:1, name:'Shailaputri', color:'Yellow', code:'#FCD34D', morning:'6:00 AM - Mangala Aarti', evening:'7:00 PM - Garba Night', ritual:'Ghatasthapana & Kalash Puja', desc:'Daughter of the mountains — purity & strength' },
+        { day:2, name:'Brahmacharini', color:'Green', code:'#10B981', morning:'6:00 AM - Morning Prayers', evening:'7:30 PM - Dandiya Raas', ritual:'Flower offerings', desc:'Ascetic form, devotion & penance' },
+        { day:3, name:'Chandraghanta', color:'Grey', code:'#6B7280', morning:'6:00 AM - Abhishek', evening:'8:00 PM - Cultural Programs', ritual:'Special bhog', desc:'Fierce & protective' },
+        { day:4, name:'Kushmanda', color:'Orange', code:'#F97316', morning:'6:00 AM - Sunrise Aarti', evening:'7:00 PM - Grand Garba', ritual:'Pumpkin offering', desc:'Creator of the universe' },
+        { day:5, name:'Skandamata', color:'White', code:'#F3F4F6', morning:'6:00 AM - Panchamrit Abhishek', evening:'7:30 PM - Traditional Dance', ritual:'White flowers', desc:'Motherly compassion & wisdom' },
+        { day:6, name:'Katyayani', color:'Red', code:'#EF4444', morning:'6:00 AM - Special Puja', evening:'8:00 PM - Maha Aarti', ritual:'Honey offering', desc:'Warrior aspect, destroys evil' },
+        { day:7, name:'Kalaratri', color:'Royal Blue', code:'#3B82F6', morning:'6:00 AM - Tantric Puja', evening:'7:00 PM - Night Celebration', ritual:'Special prayers', desc:'Destroys darkness & ignorance' },
+        { day:8, name:'Mahagauri', color:'Pink', code:'#EC4899', morning:'6:00 AM - Durga Ashtami', evening:'7:30 PM - Kanya Pujan', ritual:'Coconut offerings', desc:'Radiant peace & compassion' },
+        { day:9, name:'Siddhidatri', color:'Purple', code:'#A855F7', morning:'6:00 AM - Final Aarti', evening:'8:00 PM - Maha Visarjan', ritual:'Navami Havan', desc:'Giver of siddhis and blessings' }
+      ];
+
+      const GALLERY = [
+        {id:1,title:'Garba Night', src:'/src/assets/img/garba1.svg'},
+        {id:2,title:'Garba Night 2', src:'/src/assets/img/garba2.svg'},
+        {id:3,title:'Garba Night 3', src:'/src/assets/img/garba3.svg'},
+        {id:4,title:'Dandiya Raas',emoji:'🥁'},
+        {id:5,title:'Goddess Durga',emoji:'🙏'},
+        {id:6,title:'Diya Lights',emoji:'🪔'},
+        {id:7,title:'Cultural Program',emoji:'🎭'},
+        {id:8,title:'Evening Aarti',emoji:'🕯️'},
+        {id:9,title:'Rangoli Art',emoji:'🌸'}
+      ];
+
+      function useCountdown(targetDate){
+        const [timeLeft,setTimeLeft] = useState(getDiff());
+        useEffect(()=>{
+          const t = setInterval(()=>setTimeLeft(getDiff()),1000);
+          return ()=>clearInterval(t);
+        },[]);
+        function getDiff(){
+          const now=new Date();
+          const diff= new Date(targetDate) - now;
+          if(diff<=0) return {days:0,hours:0,minutes:0,seconds:0, finished:true};
+          return {
+            days: Math.floor(diff/(1000*60*60*24)),
+            hours: Math.floor((diff%(1000*60*60*24))/(1000*60*60)),
+            minutes: Math.floor((diff%(1000*60*60))/(1000*60)),
+            seconds: Math.floor((diff%(1000*60))/1000),
+            finished:false
+          };
+        }
+        return timeLeft;
+      }
+
+      function TempleIllustration(){
+        return (
+          <svg className="temple-svg" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stopColor="#FFD580"/><stop offset="1" stopColor="#FF6B6B"/></linearGradient>
+            </defs>
+            <rect x="0" y="80" width="220" height="60" rx="6" fill="#FFDAB9" />
+            <g className="flag" transform="translate(14,10)">
+              <rect x="0" y="0" width="12" height="70" fill="#8B5CF6"/>
+              <polygon points="12,10 40,18 12,26" fill="#FF7A7A" style={{animation:'float 3s ease-in-out infinite'}}/>
+            </g>
+            <g transform="translate(40,30)">
+              <path d="M0 60 L30 10 L60 60 Z" fill="url(#g1)" stroke="#8B0000"/>
+              <rect x="20" y="60" width="20" height="40" fill="#FFF1E6"/>
+            </g>
+            <g transform="translate(120,30)">
+              <path d="M0 60 L30 10 L60 60 Z" fill="#FFC38A" stroke="#8B0000"/>
+              <rect x="20" y="60" width="20" height="40" fill="#FFF1E6"/>
+            </g>
+            <g transform="translate(96,86)">
+              <circle cx="10" cy="10" r="6" fill="#FFB74D"><animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/></circle>
+            </g>
+          </svg>
+        );
+      }
+
+      function App(){
+        const [currentDay,setCurrentDay] = useState(0);
+        const [selectedImage,setSelectedImage] = useState(null);
+        const [musicPlaying,setMusicPlaying] = useState(false);
+        const [todayLabel,setTodayLabel] = useState('');
+        const audioRef = useRef(null);
+
+        const countdown = useCountdown('2025-10-22T00:00:00');
+
+        useEffect(()=>{
+          const navStart = new Date('2025-10-22');
+          const now=new Date();
+          const diffDays = Math.floor((now - navStart)/(1000*60*60*24));
+          if(diffDays>=0 && diffDays<9){
+            setTodayLabel(`Today is Day ${diffDays+1} - ${NAVARATRI_DAYS[diffDays].name}`);
+            setCurrentDay(diffDays);
+          } else setTodayLabel('Festival not active today');
+        },[]);
+
+        useEffect(()=>{
+          const btn = document.getElementById('music-toggle');
+          const audio = document.getElementById('bg-audio');
+          audioRef.current = audio;
+          function toggle(){
+            setMusicPlaying(p=>!p);
+          }
+          btn.addEventListener('click',toggle);
+          return ()=>btn.removeEventListener('click',toggle);
+        },[]);
+
+        useEffect(()=>{
+          const audio = audioRef.current;
+          if(!audio) return;
+          if(musicPlaying){audio.play().catch(()=>{});document.getElementById('music-toggle').textContent='🔈';}
+          else{audio.pause();document.getElementById('music-toggle').textContent='🔊';}
+        },[musicPlaying]);
+
+        useEffect(()=>{
+          // wire header nav scroll
+          document.querySelectorAll('[data-scroll]').forEach(btn=>{
+            btn.onclick = ()=>{
+              const id = btn.getAttribute('data-scroll');
+              const el = document.getElementById(id);
+              if(el) el.scrollIntoView({behavior:'smooth'});
+            }
+          });
+        },[]);
+
+        return (
+          <div>
+            <section id="home" className="hero">
+              <div style={{position:'absolute',left:20,top:30}} className="floating-diya">🪔</div>
+              <div className="container">
+                <div className="panel">
+                  <TempleIllustration />
+                  <h1 style={{fontSize:28}}>Celebrate the Spirit of Navaratri — 9 Nights of Joy and Devotion</h1>
+                  <p style={{color:'#374151'}}>{todayLabel}</p>
+
+                  <div className="count-grid" style={{marginTop:18}}>
+                    <div className="count-item"><div style={{fontSize:22,fontWeight:800}}>{countdown.days}</div><div style={{opacity:.9}}>Days</div></div>
+                    <div className="count-item"><div style={{fontSize:22,fontWeight:800}}>{countdown.hours}</div><div style={{opacity:.9}}>Hours</div></div>
+                    <div className="count-item"><div style={{fontSize:22,fontWeight:800}}>{countdown.minutes}</div><div style={{opacity:.9}}>Minutes</div></div>
+                    <div className="count-item"><div style={{fontSize:22,fontWeight:800}}>{countdown.seconds}</div><div style={{opacity:.9}}>Seconds</div></div>
+                  </div>
+                  <div style={{marginTop:14}}>
+                    <button className="btn" onClick={()=>{document.getElementById('about').scrollIntoView({behavior:'smooth'})}}>Learn More</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="about" className="container" style={{paddingTop:30,paddingBottom:30}}>
+              <div style={{display:'flex',gap:18,flexWrap:'wrap'}}>
+                <div style={{flex:'1 1 420px'}} className="card">
+                  <h2 style={{fontFamily:'Lora',fontSize:22}}>About Navaratri</h2>
+                  <p style={{color:'#374151'}}>Navaratri means "nine nights" and celebrates the divine feminine power. Over nine days we worship nine forms of Goddess Durga, each representing virtues like courage, compassion, and wisdom. The festival marks the victory of good over evil and is celebrated across India with regional variations — Garba, Dandiya, and Durga Puja.</p>
+                </div>
+                <div style={{flex:'1 1 300px'}} className="card">
+                  <h3 style={{fontFamily:'Lora'}}>Significance & Traditions</h3>
+                  <ul>
+                    <li>Daily pujas and aartis</li>
+                    <li>Garba & Dandiya nights with community dances</li>
+                    <li>Color-themed dress for each day</li>
+                    <li>Devotional songs and cultural programs</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section id="garba" className="container" style={{paddingTop:10,paddingBottom:30}}>
+              <h2 style={{fontFamily:'Lora'}}>Garba & Dandiya Nights</h2>
+              <p style={{color:'#374151'}}>Join community Garba and Dandiya events. Each night highlights a theme and a dress color to celebrate together.</p>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginTop:12}}>
+                {[1,2,3].map(n=> (
+                  <div key={n} className="card">
+                    <div style={{height:120,display:'flex',alignItems:'center',justifyContent:'center',fontSize:48}}>{n===1?'💃':n===2?'🥁':'🎉'}</div>
+                    <h4>Night {n}</h4>
+                    <p style={{color:'#6B7280'}}>Time: 7:00 PM - 11:00 PM<br/>Location: Main Pandal Ground</p>
+                    <div style={{marginTop:8}}><strong>Dress Code:</strong> {n===1?'Yellow':n===2?'Green':'Red'}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section id="gallery" className="container" style={{paddingTop:10,paddingBottom:30}}>
+              <h2 style={{fontFamily:'Lora'}}>Festival Gallery</h2>
+              <div className="masonry" style={{marginTop:12}}>
+                {GALLERY.map(img=> (
+                  <div key={img.id} className="tile" onClick={()=>setSelectedImage(img)}>
+                    {img.src ? (
+                      <img src={img.src} alt={img.title} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                    ) : (
+                      <div style={{fontSize:40}}>{img.emoji}</div>
+                    )}
+                    <div className="label">{img.title}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {selectedImage && (
+              <div className="modal" onClick={()=>setSelectedImage(null)}>
+                <div className="content" onClick={e=>e.stopPropagation()}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                    <h3>{selectedImage.title}</h3>
+                    <button onClick={()=>setSelectedImage(null)} style={{background:'transparent',border:0,fontSize:22,cursor:'pointer'}}>✖</button>
+                  </div>
+                  <div style={{height:360,display:'flex',alignItems:'center',justifyContent:'center',fontSize:96}}>{selectedImage.emoji}</div>
+                  <p style={{color:'#374151',textAlign:'center'}}>{selectedImage.title} — cherished moments from past celebrations.</p>
+                </div>
+              </div>
+            )}
+
+            <section id="schedule" className="container" style={{paddingTop:10,paddingBottom:30}}>
+              <h2 style={{fontFamily:'Lora'}}>9 Days Schedule</h2>
+              <p style={{color:'#374151'}}>Click a day to view rituals and events. Accent changes with the day's color.</p>
+              <div className="days" style={{marginTop:12}}>
+                {NAVARATRI_DAYS.map((d,idx)=> (
+                  <div key={d.day} className="day-card" onClick={()=>setCurrentDay(idx)} style={{borderTop:`6px solid ${d.code}`}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <div>
+                        <div style={{fontWeight:800}}>Day {d.day}</div>
+                        <div style={{fontSize:14,color:'#6B7280'}}>{d.name}</div>
+                      </div>
+                      <div style={{fontSize:26}}>🌺</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="detail" style={{borderLeft:`8px solid ${NAVARATRI_DAYS[currentDay].code}`,marginTop:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+                  <div>
+                    <h3 style={{margin:0}}>{NAVARATRI_DAYS[currentDay].name}</h3>
+                    <div style={{color:'#6B7280'}}>{NAVARATRI_DAYS[currentDay].desc}</div>
+                  </div>
+                  <div style={{fontSize:42}}>✨</div>
+                </div>
+
+                <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginTop:12}}>
+                  <div className="card">
+                    <strong>Morning</strong>
+                    <div style={{color:'#374151'}}>{NAVARATRI_DAYS[currentDay].morning}</div>
+                  </div>
+                  <div className="card">
+                    <strong>Evening</strong>
+                    <div style={{color:'#374151'}}>{NAVARATRI_DAYS[currentDay].evening}</div>
+                  </div>
+                  <div className="card" style={{gridColumn:'1 / -1'}}>
+                    <strong>Ritual</strong>
+                    <div style={{color:'#374151'}}>{NAVARATRI_DAYS[currentDay].ritual}</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <footer id="contact" style={{marginTop:24}}>
+              <div className="container" style={{display:'flex',gap:18,flexWrap:'wrap',alignItems:'flex-start'}}>
+                <div style={{flex:'1 1 260px'}}>
+                  <h3>Temple Information</h3>
+                  <p>Durga Temple, MG Road, City Center<br/>Phone: +91 98765 43210<br/>Email: info@navaratricelebration.com</p>
+                </div>
+                <div style={{flex:'1 1 260px'}}>
+                  <h3>Organizers</h3>
+                  <ul>
+                    <li>Shri Rajesh Kumar - President</li>
+                    <li>Smt. Priya Sharma - Coordinator</li>
+                    <li>Shri Amit Patel - Cultural Head</li>
+                  </ul>
+                </div>
+                <div style={{flex:'1 1 260px'}}>
+                  <h3>Subscribe</h3>
+                  <input placeholder="you@mail.com" style={{padding:10,borderRadius:8,border:0,marginBottom:8,width:'100%'}} />
+                  <button className="btn">Subscribe</button>
+                </div>
+              </div>
+              <div style={{textAlign:'center',marginTop:18,color:'rgba(255,255,255,0.9)'}}>© 2025 Navaratri Celebration Committee</div>
+            </footer>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
